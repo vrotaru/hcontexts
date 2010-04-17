@@ -7,6 +7,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 public class Context implements Iterable<Context> {
+	private static final String				TAIL_PREFIX	= "tail$";
+
 	private static final int				TAIL_LIMIT	= 7;
 
 	private final Map<Property<?>, Object>	properties	= new HashMap<Property<?>, Object>();
@@ -126,6 +128,16 @@ public class Context implements Iterable<Context> {
 		return property;
 	}
 
+	public static <T> void removeProperty(String name, Class<T> clazz) {
+		String id = Property.id(name, clazz);
+		propertyPool.remove(id);
+
+		// Dunno, dunno.. The check can be more costly than the removal of an missing key.
+		if (Context.class.isAssignableFrom(clazz)) {
+			propertyPool.remove(TAIL_PREFIX + id);
+		}
+	}
+
 	private static <T> Property<T> propertyFor(String name, Class<T> clazz, T defaultValue) {
 		final String id = Property.id(name, clazz);
 
@@ -147,7 +159,7 @@ public class Context implements Iterable<Context> {
 	}
 
 	private static <T> Property<T> tailProperty(Property<T> p) {
-		final String id = "tail:" + Property.id(p.name, p.clazz);
+		final String id = TAIL_PREFIX + Property.id(p.name, p.clazz);
 
 		@SuppressWarnings("unchecked")
 		Property<T> property = (Property<T>) propertyPool.get(id);
