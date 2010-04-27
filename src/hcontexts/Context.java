@@ -146,7 +146,7 @@ public class Context implements Iterable<Context> {
 		if (property == null) {
 			Property<T> newProperty = new Property<T>(name, clazz, defaultValue);
 			@SuppressWarnings("unchecked")
-			Property<T> oldProperty = (Property<T>) propertyPool.put(id, newProperty);
+			Property<T> oldProperty = (Property<T>) propertyPool.putIfAbsent(id, newProperty);
 			if (oldProperty == null) {
 				return newProperty;
 			}
@@ -166,7 +166,7 @@ public class Context implements Iterable<Context> {
 		if (property == null) {
 			Property<T> newProperty = new Property<T>(p.name, p.clazz, p.defaultValue);
 			@SuppressWarnings("unchecked")
-			Property<T> oldProperty = (Property<T>) propertyPool.put(id, newProperty);
+			Property<T> oldProperty = (Property<T>) propertyPool.putIfAbsent(id, newProperty);
 			if (oldProperty == null) {
 				return newProperty;
 			}
