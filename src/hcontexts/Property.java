@@ -13,18 +13,15 @@ public class Property<T> {
 	}
 
 	static <T> String id(String name, Class<T> clazz) {
-		final String prefix;
 		if (clazz == String.class) {
-			prefix = "";
+			return "@" + name;
 		}
 		else if (clazz == Context.class) {
-			prefix = "{}";
+			return "#" + name;
 		}
 		else {
-			prefix = clazz.getName();
+			return clazz.getName() + "@" + name;
 		}
-
-		return prefix + "@" + name;
 	}
 
 }
