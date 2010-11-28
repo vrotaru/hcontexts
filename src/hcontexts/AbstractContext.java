@@ -9,13 +9,14 @@ public abstract class AbstractContext<SELF extends AbstractContext<SELF>> implem
 
 	private final Map<Property<?>, Object>	properties	= new HashMap<Property<?>, Object>();
 
-	protected String name;	
-	protected SELF parent;
+	public final String name;	
+	public final SELF parent;
 	
 	private SELF next;
 	
-	public AbstractContext(String name) {
+	protected AbstractContext(String name, SELF parent) {
 		this.name  = name;
+		this.parent = parent;
 	}
 	
 	@SuppressWarnings("unchecked")
