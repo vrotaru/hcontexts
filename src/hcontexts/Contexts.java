@@ -1,66 +1,76 @@
 package hcontexts;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 
-public final class Contexts {
+import javolution.context.LogContext;
+import javolution.util.FastComparator;
+import javolution.util.FastMap;
 
-	// Static utility methods and fields
-	private final static ConcurrentMap<String, Property<?>>	propertyPool	= new ConcurrentHashMap<String, Property<?>>();
+public class Contexts {
 
-	public static <T> Property<T> propertyFor(String name, Class<T> clazz) {
-		return propertyFor(name, clazz, null);
+	private final static Map<String, Property<?>>	propertyPool	= new FastMap<String, Property<?>>()
+																			.setKeyComparator(FastComparator.IDENTITY)
+																			.shared();
+
+	public static <T> Property<T> propertyFor(String name, Class<T> type) {
+		return propertyFor(name, type, null);
 	}
 
-	public static <T> Property<T> propertyFor(String name, T defaultValue)
-			throws PropertyWithADifferentDefaultValueAlreadyExists {
+	public static <T> Property<T> propertyFor(String name, T defaultValue) {
+		if (defaultValue == null) {
+			throw new IllegalArgumentException("default value cannot be null");
+		}
 		@SuppressWarnings("unchecked")
 		Class<T> clazz = (Class<T>) defaultValue.getClass();
 
-		Property<T> property = propertyFor(name, clazz, defaultValue);
-		if (!defaultValue.equals(property.defaultValue)) {
-			throw new PropertyWithADifferentDefaultValueAlreadyExists();
-		}
-		return property;
+		return propertyFor(name, clazz, defaultValue);
 	}
 
-	private static <T> Property<T> propertyFor(String name, Class<T> clazz, T defaultValue) {
-		final String id = Property.id(name, clazz);
+	private static <T> Property<T> propertyFor(String name, Class<T> type, T defaultValue) {
+		LogContext.debug("Retrieving property with name: ", name, " and type: ", type);
 
-		@SuppressWarnings("unchecked")
-		Property<T> property = (Property<T>) propertyPool.get(id);
-		if (property == null) {
-			Property<T> newProperty = new Property<T>(name, clazz, defaultValue);
+		String id = id(name, type);
+		synchronized (id) {
 			@SuppressWarnings("unchecked")
-			Property<T> oldProperty = (Property<T>) propertyPool.put(id, newProperty);
-			if (oldProperty == null) {
-				return newProperty;
+			Property<T> property = (Property<T>) propertyPool.get(id);
+			if (property == null) {
+				LogContext.debug("Creating new property...");
+				property = new Property<T>(name, type, defaultValue);
+				propertyPool.put(id, property);
 			}
-			else {
-				return oldProperty;
+			else if (distinct(defaultValue, property.defaultValue)) {
+				throw new PropertyWithADifferentDefaultValueAlreadyExists();
 			}
-		}
 
-		return property;
+			return property;
+		}
 	}
 
-	static <T> Property<T> tailProperty(Property<T> p) {
-		final String id = "tail:" + Property.id(p.name, p.clazz);
-
-		@SuppressWarnings("unchecked")
-		Property<T> property = (Property<T>) propertyPool.get(id);
-		if (property == null) {
-			Property<T> newProperty = new Property<T>(p.name, p.clazz, p.defaultValue);
-			@SuppressWarnings("unchecked")
-			Property<T> oldProperty = (Property<T>) propertyPool.put(id, newProperty);
-			if (oldProperty == null) {
-				return newProperty;
-			}
-			else {
-				return oldProperty;
-			}
+	private static boolean distinct(Object a, Object b) {
+		if (a == null) {
+			return b != null;
 		}
+		return !a.equals(b);
+	}
 
-		return property;
+	/**
+	 * @param name
+	 *            Property name;
+	 * @param clazz
+	 *            Type of referenced values
+	 * @return An 'interned' id
+	 */
+	static String id(String name, Class<?> clazz) {
+		String uninternedId = canonicalName(clazz) + "@" + name;
+		return uninternedId.intern();
+	}
+
+	private static String canonicalName(Class<?> clazz) {
+		String value = clazz.getCanonicalName();
+		while (value == null) {
+			clazz = clazz.getSuperclass();
+			value = clazz.getCanonicalName();
+		}
+		return value;
 	}
 }

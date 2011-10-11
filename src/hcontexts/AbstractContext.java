@@ -1,33 +1,50 @@
 package hcontexts;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import javolution.util.FastComparator;
+import javolution.util.FastMap;
+import javolution.util.FastTable;
 
-public abstract class AbstractContext<SELF extends AbstractContext<SELF>> implements Iterable<SELF> {
-	private static final int				TAIL_LIMIT	= 7;
+public abstract class AbstractContext<SELF_TYPE extends AbstractContext<SELF_TYPE>> {
 
-	private final Map<Property<?>, Object>	properties	= new HashMap<Property<?>, Object>();
+	//
+	// Fields
+	//
+	public final String						name;
+	public final SELF_TYPE					parent;
 
-	public final String name;	
-	public final SELF parent;
-	
-	private SELF next;
-	
-	protected AbstractContext(String name, SELF parent) {
-		this.name  = name;
+	public final FastTable<SELF_TYPE>		siblings;
+
+	@SuppressWarnings("rawtypes")
+	private final FastMap<Property, Object>	properties	= new FastMap<Property, Object>()
+																.setKeyComparator(FastComparator.IDENTITY);
+
+	//
+	// Constructor
+	//
+	public AbstractContext(String name) {
+		this(name, null);
+	}
+
+	protected AbstractContext(String name, SELF_TYPE parent) {
+		this.name = name;
 		this.parent = parent;
+
+		siblings = new FastTable<SELF_TYPE>();
+		siblings.add(self());
 	}
-	
+
+	//
+	// Methods
+	//
+	protected abstract SELF_TYPE inner(String name);
+
 	@SuppressWarnings("unchecked")
-	protected SELF self() {
-		return (SELF) this;
+	public final SELF_TYPE self() {
+		return (SELF_TYPE) this;
 	}
-	
-	protected abstract SELF inner(String name);
-	
-	public <T> T get(Property<T> property) {
-		@SuppressWarnings("unchecked")
+
+	@SuppressWarnings("unchecked")
+	public final <T> T get(Property<T> property) {
 		T value = (T) properties.get(property);
 		if (value == null) {
 			return property.defaultValue;
@@ -35,70 +52,58 @@ public abstract class AbstractContext<SELF extends AbstractContext<SELF>> implem
 		return value;
 	}
 
-	public <T> SELF put(Property<T> property, T value) {
+	public final <T> void set(Property<T> property, T value) {
 		properties.put(property, value);
-		return self();
 	}
-	
-	@SuppressWarnings("unchecked")
-	public SELF addInnerContext(String contextName) {
-		SELF context = inner(contextName);
-		
-		Property<SELF> contextProperty = (Property<SELF>) Contexts.propertyFor(contextName, context.getClass());
-		append(contextProperty, context);
 
-		return context;
-	}
-	
-	private void append(Property<SELF> contextProperty, SELF newContext) {
-		SELF context = get(contextProperty);
-		if (context == null) {
-			put(contextProperty, newContext);
+	public final SELF_TYPE addInnerContext(String contextName) {
+		@SuppressWarnings("unchecked")
+		Property<SELF_TYPE> innerProperty = (Property<SELF_TYPE>) Contexts.propertyFor(contextName, self().getClass());
+
+		SELF_TYPE newInnner = inner(contextName);
+		SELF_TYPE oldInner = get(innerProperty);
+		if (oldInner == null) {
+			oldInner = newInnner;
+			set(innerProperty, newInnner);
+
+			return oldInner;
 		}
-		else {
-			Property<SELF> tailProperty = Contexts.tailProperty(contextProperty);
-			SELF tailContext = get(tailProperty);
-			if (tailContext == null) {
-				int limit = 0;
-				while (context.next != null) {
-					limit++;
-					context = context.next;
-				}
-				context.next = newContext;
-				// the limit > TAIL_LIMIT case can happen if the same context is accessed from
-				// multiple threads. Which is almost surely a horrible idea.
-				if (limit >= TAIL_LIMIT) {
-					put(tailProperty, newContext);
-				}
-			}
-			else {
-				tailContext.next = newContext;
-				put(tailProperty, newContext);
-			}
+
+		oldInner.siblings.add(newInnner);
+		return newInnner;
+	}
+
+	//
+	// ContextVisitor support. Calls the visitor#visit with all the siblings.
+	//
+	public void accept(ContextVisitor<SELF_TYPE> visitor) {
+
+		FastTable<SELF_TYPE> siblings = self().siblings;
+		int i = 0, n = siblings.size();
+		for (; i < n; ++i) {
+			SELF_TYPE sibling = siblings.get(i);
+			visitor.visit(sibling, i, n);
 		}
 	}
-	
-	@Override
-	public Iterator<SELF> iterator() {
-		Iterator<SELF> iterator = new Iterator<SELF>() {
-			SELF currentContext = self();
-			@Override
-			public boolean hasNext() {
-				return currentContext != null;
+
+	//
+	// InnerVisitor support. Calls visitor#visitInner with all properties.
+	//
+	public void acceptInnner(InnerVisitor<SELF_TYPE> visitor) {
+		int index = 0;
+		int length = properties.size();
+
+		// Get the first real entry.
+		@SuppressWarnings("rawtypes")
+		FastMap.Entry<Property, Object> entry = properties.head().getNext();
+		@SuppressWarnings("rawtypes")
+		FastMap.Entry<Property, Object> end = properties.tail();
+		while (entry != end) {
+			if (entry.getKey() != null) {
+				visitor.visitInner(entry.getKey(), entry.getValue(), index++, length);
 			}
 
-			@Override
-			public SELF next() {
-				SELF context = currentContext;
-				currentContext = currentContext.next;
-				return context;
-			}
-
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException("Remove method not supported");
-			}
-		};
-		return iterator;
+			entry = entry.getNext();
+		}
 	}
 }

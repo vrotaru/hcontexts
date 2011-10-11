@@ -1,45 +1,49 @@
 package hcontexts.xml;
 
 import hcontexts.AbstractContext;
+import javolution.text.TextBuilder;
 
 public class XmlContext extends AbstractContext<XmlContext> {
 
-	// Root element
-	private String text;
-	private StringBuilder builder;
-	
-	// Common
-	private int start;
-	private int extent;
-	private XmlContext root;
-	
+	//
+	// Constructors
+	//
 	public XmlContext(String name) {
 		this(name, null);
 	}
 	
-	private XmlContext(String name, XmlContext parentContext) {
-		super(name, parentContext);
-		
+	protected XmlContext(String name, XmlContext parent) {
+		super(name, parent);
+
+		root = parent == null ? this : parent.root;
+		builder = parent == null ? new TextBuilder() : null;
+
+		start = parent == null ? 0 : -1;
 		extent = 0;
-		if (parentContext == null) {
-			root = this;
-			
-			builder = new StringBuilder();
-			start = 0;
-		}
-		else {
-			root  = parentContext.root;
-			start = -1;
-		}
 	}
-	
+
+	//
+	// Methods
+	//
 	@Override
 	protected XmlContext inner(String name) {
-		XmlContext context = new XmlContext(name, this);
-		
-		return context;
-	}	
-	
+		return new XmlContext(name, this);
+	}
+
+	public void append(String seq) {
+		if (parent == null) {
+			text = null; // invalidate cached result
+			builder.append(seq);
+		}
+		else {
+			if (start < 0) {
+				start = root.extent;
+			}
+			parent.append(seq);
+		}
+		extent += seq.length();
+	}
+
 	public String getText() {
 		if (parent == null) {
 			if (text == null) {
@@ -51,19 +55,18 @@ public class XmlContext extends AbstractContext<XmlContext> {
 			return root.getText().substring(start, start + extent);
 		}
 	}
-	
-	public void append(String text) {
-		extent += text.length();
-		
-		if (parent == null) {			
-			this.text = null; // invalidate cached result.
-			builder.append(text);
-		}
-		else {
-			if (start < 0) {
-				start = root.extent;
-			}
-			parent.append(text);
-		}
-	}
+
+	//
+	// Fields
+	//
+
+	/* common */
+	private final XmlContext	root;
+
+	private int					start;
+	private int					extent;
+
+	/* root */
+	private String				text;
+	private TextBuilder			builder;
 }

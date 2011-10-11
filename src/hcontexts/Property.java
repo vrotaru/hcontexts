@@ -2,29 +2,22 @@ package hcontexts;
 
 public class Property<T> {
 
-	public final String		name;
-	public final Class<T>	clazz;
-	public final T			defaultValue;
-
-	Property(String name, Class<T> clazz, T defaultValue) {
+	public final String name;
+	public final Class<T> type;
+	public final T defaultValue;
+	
+	private final String repr;
+	
+	Property(String name, Class<T> type, T defaultValue) {
 		this.name = name;
-		this.clazz = clazz;
+		this.type = type;
 		this.defaultValue = defaultValue;
+		
+		repr = Contexts.id(name, type);
 	}
-
-	static <T> String id(String name, Class<T> clazz) {
-		final String prefix;
-		if (clazz == String.class) {
-			prefix = "";
-		}
-		else if (clazz == Context.class) {
-			prefix = "{}";
-		}
-		else {
-			prefix = clazz.getName();
-		}
-
-		return prefix + "@" + name;
+	
+	@Override
+	public String toString() {
+		return repr;
 	}
-
 }
