@@ -14,6 +14,11 @@ import javolution.context.LogContext;
 public class XmlContextReader {
 
 	//
+	// Fields
+	//
+	private final boolean	condenseWhiteSpace;
+
+	//
 	// Constructors
 	//
 	public XmlContextReader() {
@@ -120,9 +125,4 @@ public class XmlContextReader {
 			}
 		}
 	}
-
-	//
-	// Fields
-	//
-	private final boolean	condenseWhiteSpace;
 }

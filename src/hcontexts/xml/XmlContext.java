@@ -6,12 +6,26 @@ import javolution.text.TextBuilder;
 public class XmlContext extends AbstractContext<XmlContext> {
 
 	//
+	// Fields
+	//
+
+	/* common */
+	private final XmlContext	root;
+
+	private int					start;
+	private int					extent;
+
+	/* root */
+	private String				text;
+	private TextBuilder			builder;
+
+	//
 	// Constructors
 	//
 	public XmlContext(String name) {
 		this(name, null);
 	}
-	
+
 	protected XmlContext(String name, XmlContext parent) {
 		super(name, parent);
 
@@ -55,18 +69,4 @@ public class XmlContext extends AbstractContext<XmlContext> {
 			return root.getText().substring(start, start + extent);
 		}
 	}
-
-	//
-	// Fields
-	//
-
-	/* common */
-	private final XmlContext	root;
-
-	private int					start;
-	private int					extent;
-
-	/* root */
-	private String				text;
-	private TextBuilder			builder;
 }
