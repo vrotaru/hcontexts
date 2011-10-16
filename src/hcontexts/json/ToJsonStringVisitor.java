@@ -9,7 +9,7 @@ import javolution.text.TextBuilder;
 public class ToJsonStringVisitor<CONTEXT extends AbstractContext<CONTEXT>> implements ContextVisitor<CONTEXT>,
 		InnerVisitor<CONTEXT> {
 
-	private TextBuilder	builder	= new TextBuilder();
+	protected TextBuilder	builder	= new TextBuilder();
 
 	@Override
 	public void visit(CONTEXT context, int index, int length) {
@@ -59,5 +59,10 @@ public class ToJsonStringVisitor<CONTEXT extends AbstractContext<CONTEXT>> imple
 		if (index < length - 1) {
 			builder.append(',');
 		}
+	}
+	
+	@Override
+	public String toString() {		
+		return builder.toText().toString();
 	}
 }
