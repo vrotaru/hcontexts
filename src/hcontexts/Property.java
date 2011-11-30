@@ -13,7 +13,7 @@ public class Property<T> {
 		this.type = type;
 		this.defaultValue = defaultValue;
 		
-		repr = Contexts.id(name, type);
+		repr = name + "<" + type.getName() + ">";
 	}
 	
 	@Override

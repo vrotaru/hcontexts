@@ -69,4 +69,9 @@ public class XmlContext extends AbstractContext<XmlContext> {
 			return root.getText().substring(start, start + extent);
 		}
 	}
+	
+	@Override
+	public String toString() {
+		return "<" + name  + ":" + Integer.toHexString(hashCode()) + "/>";
+	}
 }
