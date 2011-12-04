@@ -15,8 +15,7 @@ public abstract class AbstractContext<SELF_TYPE extends AbstractContext<SELF_TYP
 	public final FastTable<SELF_TYPE>		siblings;
 
 	@SuppressWarnings("rawtypes")
-	private final FastMap<Property, Object>	properties	= new FastMap<Property, Object>()
-																.setKeyComparator(FastComparator.IDENTITY);
+	private final FastMap<Property, Object>	properties;
 
 	//
 	// Constructor
@@ -29,13 +28,16 @@ public abstract class AbstractContext<SELF_TYPE extends AbstractContext<SELF_TYP
 		this.name = name;
 		this.parent = parent;
 
-		siblings = new FastTable<SELF_TYPE>();
+		properties = FastMap.newInstance();
+		properties.setKeyComparator(FastComparator.IDENTITY);
+		
+		siblings = FastTable.newInstance();
 		siblings.add(self());
 	}
 
 	//
 	// Methods
-	//	
+	//
 	protected abstract SELF_TYPE inner(String name);
 
 	@SuppressWarnings("unchecked")

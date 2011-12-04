@@ -7,7 +7,6 @@ import javolution.util.FastComparator;
 import javolution.util.FastMap;
 
 public class Contexts {
-
 	private final static Map<String, Property<?>>	propertyPool	= new FastMap<String, Property<?>>()
 																			.setKeyComparator(FastComparator.IDENTITY)
 																			.shared();
