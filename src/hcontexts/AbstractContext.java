@@ -1,6 +1,5 @@
 package hcontexts;
 
-import javolution.context.LogContext;
 import javolution.util.FastComparator;
 import javolution.util.FastMap;
 import javolution.util.FastTable;
@@ -22,7 +21,7 @@ public abstract class AbstractContext<SELF_TYPE extends AbstractContext<SELF_TYP
 	//
 	// Constructor
 	//
-	public AbstractContext(String name) {
+	protected AbstractContext(String name) {
 		this(name, null);
 	}
 
@@ -36,7 +35,7 @@ public abstract class AbstractContext<SELF_TYPE extends AbstractContext<SELF_TYP
 
 	//
 	// Methods
-	//
+	//	
 	protected abstract SELF_TYPE inner(String name);
 
 	@SuppressWarnings("unchecked")
@@ -83,8 +82,6 @@ public abstract class AbstractContext<SELF_TYPE extends AbstractContext<SELF_TYP
 		int i = 0, n = siblings.size();
 		for (; i < n; ++i) {
 			SELF_TYPE sibling = siblings.get(i);
-			
-			LogContext.debug("accept sibling: ", sibling, ", i: ", i, ", n: ", n);
 			visitor.visit(sibling, i, n);
 		}
 	}
@@ -104,10 +101,7 @@ public abstract class AbstractContext<SELF_TYPE extends AbstractContext<SELF_TYP
 		while (entry != end) {
 			Property<?> key = entry.getKey();
 			if (key != null) {
-				Object value = entry.getValue();
-				
-				LogContext.debug("accept inner, key: ", key, ", value: ", value, ", index: ", index, ", length: ", length);
-				visitor.visitInner(key, value, index++, length);
+				visitor.visitInner(key, entry.getValue(), index++, length);
 			}
 
 			entry = entry.getNext();
