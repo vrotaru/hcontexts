@@ -47,7 +47,7 @@ public class XmlContextReader {
 				return context;
 			case XMLEvent.START_ELEMENT:
 				tagname = reader.getLocalName();
-				context = XmlContext.create(tagname);
+				context = new XmlContext(tagname);
 
 				readAttributes(context, reader);
 				readInnerElements(context, reader);

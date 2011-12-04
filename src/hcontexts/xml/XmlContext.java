@@ -1,7 +1,6 @@
 package hcontexts.xml;
 
 import hcontexts.AbstractContext;
-import javolution.context.ObjectFactory;
 import javolution.text.TextBuilder;
 
 public class XmlContext extends AbstractContext<XmlContext> {
@@ -23,7 +22,7 @@ public class XmlContext extends AbstractContext<XmlContext> {
 	//
 	// Constructors
 	//
-	protected XmlContext(String name) {
+	public XmlContext(String name) {
 		this(name, null);
 	}
 
@@ -42,10 +41,7 @@ public class XmlContext extends AbstractContext<XmlContext> {
 	//
 	@Override
 	protected XmlContext inner(String name) {
-		contextName.set(name);
-		contextParent.set(this);
-		
-		return FACTORY.object();
+		return new XmlContext(name, this);
 	}
 
 	public void append(String seq) {
@@ -73,30 +69,4 @@ public class XmlContext extends AbstractContext<XmlContext> {
 			return root.getText().substring(start, start + extent);
 		}
 	}
-	
-	@Override
-	public String toString() {
-		return "<" + name  + ":" + Integer.toHexString(hashCode()) + "/>";
-	}
-	
-	public static XmlContext create(String name) {
-		contextName.set(name);
-		contextParent.set(null);
-		
-		return FACTORY.object();
-	}
-	
-	//
-	// Thread local storage for name and parent
-	//
-	private static final ThreadLocal<String> contextName = new ThreadLocal<String>();
-	private static final ThreadLocal<XmlContext> contextParent = new ThreadLocal<XmlContext>();
-	
-	private static final ObjectFactory<XmlContext> FACTORY = new ObjectFactory<XmlContext>() {
-		
-		@Override
-		protected XmlContext create() {			
-			return new XmlContext(contextName.get(), contextParent.get());
-		}
-	};
 }
